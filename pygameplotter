@@ -1,0 +1,91 @@
+import pygame
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# Initialize Pygame
+pygame.init()
+
+# Set up screen
+WIDTH, HEIGHT = 800, 600
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("Comet Flight Logger 9000 - NITRO MODE")
+
+# Colors
+WHITE = (20, 20, 20)  # Dark background
+BLUE = (0, 150, 255)
+LIGHT_BLUE = (100, 200, 255)
+NITRO_COLOR = (255, 50, 50)  # Red for NITRO!!
+
+# Player setup
+player_pos = [WIDTH // 2, HEIGHT // 2]
+normal_speed = 5
+nitro_speed = 12  # SPEED BOOST
+current_speed = normal_speed
+
+# Flight path recording
+flight_data = []
+
+# Clock
+clock = pygame.time.Clock()
+
+# Main game loop
+running = True
+while running:
+    clock.tick(60)  # Limit to 60 FPS
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+
+    # Movement + Nitro
+    keys = pygame.key.get_pressed()
+
+    if keys[pygame.K_SPACE]:
+        current_speed = nitro_speed
+    else:
+        current_speed = normal_speed
+
+    if keys[pygame.K_LEFT]:
+        player_pos[0] -= current_speed
+    if keys[pygame.K_RIGHT]:
+        player_pos[0] += current_speed
+    if keys[pygame.K_UP]:
+        player_pos[1] -= current_speed
+    if keys[pygame.K_DOWN]:
+        player_pos[1] += current_speed
+
+    # Record position
+    flight_data.append((player_pos[0], player_pos[1]))
+
+    # Draw everything
+    screen.fill(WHITE)
+
+    # Draw comet trail (last 100 points)
+    for idx, pos in enumerate(flight_data[-100:]):
+        alpha = int(255 * (idx / 100))
+        trail_color = (LIGHT_BLUE[0], LIGHT_BLUE[1], LIGHT_BLUE[2])
+        pygame.draw.circle(screen, trail_color, pos, 3)
+
+    # Draw player
+    if current_speed == nitro_speed:
+        pygame.draw.circle(screen, NITRO_COLOR, player_pos, 12)  # Bigger + red
+    else:
+        pygame.draw.circle(screen, BLUE, player_pos, 10)
+
+    pygame.display.flip()
+
+# Exit Pygame
+pygame.quit()
+
+# Save flight data to a CSV
+df = pd.DataFrame(flight_data, columns=['x', 'y'])
+df.to_csv('flight_path.csv', index=False)
+print("Flight data saved to 'flight_path.csv'!")
+
+# Plot the flight path
+plt.figure(figsize=(8, 6))
+plt.plot(df['x'], df['y'], marker='o', color='cyan')
+plt.title('Flight Path - NITRO BOOST MODE')
+plt.xlabel('X Position')
+plt.ylabel('Y Position')
+plt.grid(True)
+plt.show()
